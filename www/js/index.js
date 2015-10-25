@@ -1,202 +1,236 @@
-/*
- index.js
- Copyright 2014 AppFeel. All rights reserved.
- http://www.appfeel.com
- 
- AdMobAds Cordova Plugin (com.admob.google)
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to
- deal in the Software without restriction, including without limitation the
- rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- sell copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
- */
-
 var app = {
-  // global vars
-  autoShowInterstitial: false,
-  progressDialog: document.getElementById("progressDialog"),
-  spinner: document.getElementById("spinner"),
-  weinre: {
-    enabled: false,
-    ip: '', // ex. http://192.168.1.13
-    port: '', // ex. 9090
-    targetApp: '' // ex. see weinre docs
-  },
-  
-  // Application Constructor
-  initialize: function () {
-    if (( /(ipad|iphone|ipod|android)/i.test(navigator.userAgent) )) {
-      document.addEventListener('deviceready', this.onDeviceReady, false);
-    } else {
-      app.onDeviceReady();
+    initialize: function () {
+        this.bindEvents();
+    },
+    bindEvents: function () {
+        document.addEventListener('deviceready', this.onDeviceReady, false);
+    },
+    onDeviceReady: function () {
+        app.receivedEvent('deviceready');
     }
-  },
-  // Must be called when deviceready is fired so AdMobAds plugin will be ready
-  initAds: function () {
-    var isAndroid = (/(android)/i.test(navigator.userAgent));
-    var adPublisherIds = {
-      ios : {
-        banner: 'ca-app-pub-9863325511078756/5232547029',
-        interstitial: 'ca-app-pub-9863325511078756/6709280228'
-      },
-      android : {
-        banner: 'ca-app-pub-9863325511078756/9802347428',
-        interstitial: 'ca-app-pub-9863325511078756/2279080628'
-      }
-    };
-
-    var admobid;
-    if (isAndroid) {
-      admobid = adPublisherIds.android;
-    } else {
-      admobid = adPublisherIds.ios;
-    }
-
-    admob.setOptions({
-      publisherId: admobid.banner,
-      interstitialAdId: admobid.interstitial,
-      bannerAtTop: false, // set to true, to put banner at top
-      overlap: false, // set to true, to allow banner overlap webview
-      offsetStatusBar: true, // set to true to avoid ios7 status bar overlap
-      isTesting: true, // receiving test ads (do not test with real ads as your account will be banned)
-      autoShowBanner: true, // auto show banners ad when loaded
-      autoShowInterstitial: false // auto show interstitials ad when loaded
-    });
-    
-    // Adjust viewport
-    var viewportScale = 1 / window.devicePixelRatio;
-    document.getElementById("viewport").setAttribute("content", "user-scalable=no, initial-scale=" + viewportScale + ", minimum-scale=0.2, maximum-scale=2, width=device-width"); 
-  },
-  // Bind Event Listeners
-  bindAdEvents: function () {
-    document.addEventListener("orientationchange", this.onOrientationChange, false);
-    document.addEventListener(admob.events.onAdLoaded, this.onAdLoaded, false);
-    document.addEventListener(admob.events.onAdFailedToLoad, this.onAdFailedToLoad, false);
-    document.addEventListener(admob.events.onAdOpened, function (e) {}, false);
-    document.addEventListener(admob.events.onAdClosed, function (e) {}, false);
-    document.addEventListener(admob.events.onAdLeftApplication, function (e) {}, false);
-    document.addEventListener(admob.events.onInAppPurchaseRequested, function (e) {}, false);
-  },
-  
-  // -----------------------------------
-  // Events.
-  // The scope of 'this' is the event.
-  // -----------------------------------
-  onOrientationChange: function () {
-    app.onResize();
-  },
-  onDeviceReady: function () {
-    var weinre,
-        weinreUrl;
-    
-    document.removeEventListener('deviceready', app.onDeviceReady, false);
-    
-    if (app.weinre.enabled) {
-      console.log('Loading weinre...');
-      weinre = document.createElement('script');
-      weinreUrl = app.weinre.ip + ":" + app.weinre.port;
-      weinreUrl += '/target/target-script-min.js';
-      weinreUrl += '#' + app.weinre.targetApp;
-      weinre.setAttribute('src', weinreUrl);
-      document.head.appendChild(weinre);
-    }
-    
-    if (admob) {
-      console.log('Binding ad events...');
-      app.bindAdEvents();
-      console.log('Initializing ads...');
-      app.initAds();
-    } else {
-      alert('AdMobAds plugin not ready');
-    }
-  },
-  onAdLoaded: function (e) {
-    app.showProgress(false);
-    if (e.adType === admob.AD_TYPE.INTERSTITIAL) {
-      if (app.autoShowInterstitial) {
-        admob.showInterstitialAd();
-      } else {
-        alert("Interstitial is available. Click on 'Show Interstitial' to show it.");
-      }
-    }
-  },
-  onAdFailedToLoad: function(event, e) {
-    app.showProgress(false);
-    alert("Could not load ad: " + e.reason);
-  },
-  onResize: function () {
-    var msg = 'Web view size: ' + window.innerWidth + ' x ' + window.innerHeight;
-    document.getElementById('sizeinfo').innerHTML = msg;
-  },
-  
-  // -----------------------------------
-  // App buttons functionality
-  // -----------------------------------
-  startBannerAds: function () {
-    app.showProgress(true);
-    admob.createBannerView(function (){}, function (e) {
-      alert(JSON.stringify(e));
-    });
-  },
-  removeBannerAds: function () {
-    app.showProgress(false);
-    admob.destroyBannerView();
-  },
-  showBannerAds: function () {
-    app.showProgress(false);
-    admob.showBannerAd(true, function (){}, function (e) {
-      alert(JSON.stringify(e));
-    });
-  },
-  hideBannerAds: function () {
-    app.showProgress(false);
-    admob.showBannerAd(false);
-  },
-  requestInterstitial: function (autoshow) {
-    app.showProgress(true);
-    app.autoShowInterstitial = autoshow;
-    admob.requestInterstitialAd(function (){}, function (e) {
-      alert(JSON.stringify(e));
-    });
-  },
-  showInterstitial: function() {
-    app.showProgress(false);
-    admob.showInterstitialAd(function (){}, function (e) {
-      alert(JSON.stringify(e));
-    });
-  },
-  showProgress: function(show) {
-    if (show) {
-      addClass(app.spinner, "animated");
-      removeClass(app.progressDialog, "hidden");
-    } else {
-      addClass(app.progressDialog, "hidden");
-      removeClass(app.spinner, "animated");
-    }
-  }
 };
-
-function removeClass(elem, cls) {
-  var str;
-  do {
-    str = " " + elem.className + " ";
-    elem.className = str.replace(" " + cls + " ", " ").replace(/^\s+|\s+$/g, "");
-  } while (str.match(cls));
+function exitFromApp(){
+    navigator.app.exitApp();x;
 }
 
-function addClass(elem, cls) {
-  elem.className += (" " + cls);
+function onDeviceReady() {
+  document.removeEventListener('deviceready', onDeviceReady, false);
+
+  // Set AdMobAds options:
+  admob.setOptions({
+    publisherId:          "pub-1010853398748143",  // Required
+    interstitialAdId:     "ca-app-pub-1010853398748143/8855901225",  // Optional
+  });
+
+  // Start showing banners (atomatic when autoShowBanner is set to true)
+  admob.createBannerView();
+
+  // Request interstitial (will present automatically when autoShowInterstitial is set to true)
+  //admob.requestInterstitialAd();
+    
+}
+function backButton() {
+    document.addEventListener("backbutton", function(e){
+        e.preventDefault();
+        navigator.app.exitApp();
+    }, false);
+}
+function backButton2() {
+    document.addEventListener("backbutton", function(e){
+        navigator.app.backHistory()
+    }, false);
+}
+document.addEventListener("deviceready", onDeviceReady, false);
+
+
+function ziskat() {
+    var output = $('#output');
+    $('#LoadingImage').show();
+    
+    $.ajax({
+        url: 'http://uhabasku.cz/revizor/zobraz.php',
+        dataType: 'jsonp',
+        jsonp: 'jsoncallback',
+        timeout: 60000,
+        success: function (data, status) {
+            output.text('');
+            $.each(data, function (i,item) {
+                var linkaClass = item.linka;
+                linkaClass = linkaClass.replace(/\s+/g, '-').toLowerCase();
+                var zastavkaClass = item.zastavka;
+                zastavkaClass = zastavkaClass.replace(/\s+/g, '-').toLowerCase();
+                var timeago = $.timeago(item.datum);
+                var presnycas = item.datum.substring(11,16);
+                var dateSort = item.datum;
+
+                var landmark = 
+                '<div class="mix '+linkaClass+' '+zastavkaClass+'" data-date="'+ dateSort +'">'
+                +'<div class="row-1">'
+                +'<div class="obrazek"><img src="img/ico-'+linkaClass+'.png"></div>'
+                +'<div class="obsah"><div class="zastavka">'+item.zastavka+'</div>'
+                +'<div class="poznamka">'+item.poznamka+'</div>'
+                +'</div><div class="clear"></div></div>'
+                +'<div class="cas">'+timeago+'</div>'
+                +'<div class="presnycas">'+presnycas+'</div><div class="clear"></div></div>';
+                output.append(landmark);
+            });
+        },
+        error: function(){
+            output.html('<center><br><br>Nastal problém s načítáním dat.<br><a href="#" onclick="ziskat();return false;">Zkuste to znovu</a></center>');
+        }
+    });
+    /*$.ajaxSetup({
+        scriptCharset: "utf-8",
+        contentType: "application/json; charset=utf-8"
+    });*/
+
+    $.getJSON('http://whateverorigin.org/get?url=' + 
+        encodeURIComponent('http://api.revizorwatch.cz/rev/getBlackList') + '&callback=?',
+        function (data) {
+            console.log("> ", data);
+            $('#LoadingImage').fadeOut(300);
+            var response = $.parseJSON(data.contents);
+        
+            for (var u = 0; u < response.data.posts.length; u++){
+                var itemK = response.data.posts[u];
+                
+                var linkaClassK = itemK.line.toLowerCase();
+                var zastavkaClassK = itemK.station;
+                zastavkaClassK = zastavkaClassK.replace(/\s+/g, '-').toLowerCase();
+                var timeagoK = $.timeago(itemK.date);
+                var presnycasK = itemK.date.substring(11,16);
+                var dateKSort = itemK.date;
+
+                if ((linkaClassK == 'a') || (linkaClassK == 'b') || (linkaClassK == 'c')) {
+                    var landmarkK = 
+                    '<div class="mix metro-'+linkaClassK+' '+zastavkaClassK+'" data-date="'+ dateKSort +'">'
+                    +'<div class="row-1">'
+                    +'<div class="obrazek"><img src="img/ico-metro-'+ linkaClassK +'.png"></div>'
+                    +'<div class="obsah"><div class="zastavka">'+ itemK.station +'</div>'
+                    +'<div class="poznamka">'+itemK.note+'</div>'
+                    +'</div><div class="clear"></div></div>'
+                    +'<div class="cas">'+ timeagoK +'</div>'
+                    +'<div class="presnycas">'+presnycasK+'</div><div class="clear"></div></div>';
+                    output.append(landmarkK);
+                }
+            }
+        try {
+                $(output).mixItUp('destroy');
+            }catch(x) {}
+            $(function(){
+                var $filterSelect = $('#FilterSelect'),
+                    /*$sortSelect = $('#SortSelect'),*/
+                    $container = output;
+                
+                $(output).mixItUp({
+                    layout: {
+                        display: 'block'
+                    },
+                    animation: {
+                        effects: 'fade'
+                    },
+                    selectors: {
+                        filter: 'all',
+                    },
+                    load: {
+                        sort: 'date:desc'
+                    }
+                });
+                $filterSelect.on('change', function(){
+                    $container.mixItUp('filter', this.value);
+                });
+                /*$sortSelect.on('change', function(){
+                    $container.mixItUp('sort', this.value);
+                });*/
+            });
+    });
+};
+
+
+/*******************ADD*******************/
+function nahrat () {
+    $('#linka').change(function(){
+        var id = $(this).find(':selected').data('id');
+        $('#zastavka option').hide().filter('[data-id="'+id+'"]').show();
+        $("#zastavka option[value=blank]").prop('selected', true)
+    });
+
+    var empty = false;
+    if (empty) {
+        $('#btnNahraj').attr('disabled', 'disabled');
+    } else {
+        $('#btnNahraj').removeAttr('disabled');
+    }
+
+    $('#contactForm').submit(function(){
+        var self = this;
+        $.ajax(
+            $(this).attr('action'),
+            {
+                data: $(self).serialize(),
+                method: $(self).attr('method'),
+                beforeSend: function(){
+                 $("#btnNahraj").html('Nahrávám...');
+                 $('#btnNahraj').attr('disabled', 'disabled');
+                },
+                complete: function(){
+                 $("#btnNahraj").html('Nahlásit<i class="material-icons right">send</i>');
+                 $('#btnNahraj').removeAttr('disabled');
+                },
+                success: function(){
+                    $(".add form").hide();
+                    $(".add .success").show();
+                    /*UNIQUE ID*/
+                    var currTimeD = new Date();
+                    var currHourA = currTimeD.getHours()*3600;
+                    var currMinA = currTimeD.getMinutes()*60;
+                    var currSecA = currTimeD.getSeconds();
+                    var currTimeA = currHourA + currMinA + currSecA;
+                    window.localStorage.clear();
+                    window.localStorage.setItem('key', currTimeA);
+                    
+                    setTimeout(function(){ window.location = 'index.html'; }, 1500);
+                },
+                error: function(){
+                    $(".add .successno").show();
+                }
+            }
+        );
+        return false;
+    });   
+}
+
+function zarizeni () {
+    var currTimeD = new Date();
+    var currHour = currTimeD.getHours()*3600;
+    var currMin = currTimeD.getMinutes()*60;
+    var currSec = currTimeD.getSeconds();
+    var currTime = currHour + currMin + currSec;
+    
+    var value1 = window.localStorage.getItem("key");
+    var value = parseInt(value1) + 300;
+    
+    if (value > currTime) {
+        $('#contactForm').hide();
+        $('.time').show();
+        var zbyva = value - currTime;
+        /*var zbyvaMinutes = Math.floor(zbyva / 60);
+        var zbyvaSeconds = zbyvaMinutes - zbyvaMinutes * 60;
+        
+        function str_pad_left(string,pad,length) {
+            return (new Array(length+1).join(pad)+string).slice(-length);
+        }
+        var finalTime = str_pad_left(zbyvaMinutes,'0',2)+':'+str_pad_left(zbyvaSeconds,'0',2);*/
+        var zbyvaMinutes = Math.floor(zbyva / 60); // 7
+        var zbyvaSeconds = zbyva % 60; // 30
+        $('.time span').html(zbyvaMinutes + ':' + zbyvaSeconds);
+        }
+    else {
+        $('#contactForm').show();
+        $('.time').hide();
+    }
+}
+
+function smazat () {
+    window.localStorage.clear();
 }
