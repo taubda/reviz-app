@@ -9,7 +9,15 @@
   <access origin="*" />
   <preference name="LogLevel" value="VERBOSE"/>
   <preference name="debuggable" value="true"/>
-  
+    <preference name="orientation" value="default" />
+    <preference name="target-device" value="universal" />
+    <preference name="fullscreen" value="false" />
+    <preference name="prerendered-icon" value="true" />
+    <preference name="stay-in-webview" value="false" />
+    <!--<preference name="ios-statusbarstyle" value="black-opaque" />-->
+    <preference name="ios-statusbarstyle" value="#B71C1C" />
+    <preference name="StatusBarBackgroundColor" value="#B71C1C" />
+    <preference name="disable-cursor" value="false" />
   <gap:plugin name="cordova-admob" source="npm" />
   
   <icon src="res/icons/appFeel-512.png" />
@@ -39,6 +47,14 @@
   <icon src="icon-Small-50.png" width="50" height="50" gap:platform="ios" />
   <icon src="icon-Small-50@2x.png" width="100" height="100" gap:platform="ios" />
   
+  <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    <allow-intent href="geo:*" />
+	
   <platform name="android">
     <icon src="res/icons/android/ic_launcher_ldpi.png" density="ldpi" />
     <icon src="res/icons/android/ic_launcher_mdpi.png" density="mdpi" />
@@ -46,6 +62,7 @@
     <icon src="res/icons/android/ic_launcher_xhdpi.png" density="xhdpi" />
     <icon src="res/icons/android/ic_launcher_xxhdpi.png" density="xxhdpi" />
     <icon src="res/icons/android/ic_launcher_xxxhdpi.png" density="xxxhdpi" />
+	<allow-intent href="market:*" />
   </platform>
   
   <platform name="ios">
@@ -73,5 +90,8 @@
     <!-- iPad Spotlight and Settings Icon -->
     <icon src="res/icons/ios/icon-Small-50.png" width="50" height="50" />
     <icon src="res/icons/ios/icon-Small-50@2x.png" width="100" height="100" />
+	
+	<allow-intent href="itms:*" />
+    <allow-intent href="itms-apps:*" />
   </platform>
 </widget>
